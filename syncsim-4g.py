@@ -62,7 +62,7 @@ class bcolors:
 
 
 class FileHandler(object):
-    ALLOWED_FILE_EXTENSIONS = [".zip", ".tar.bz2",
+    ALLOWED_FILE_EXTENSIONS = [".zip", ".tar.bz2", ".bz2",
                                ".tar.gz", ".tar", ".7z", ".rar"]
     ALLOWED_FILE_EXTENSIONS.sort()
     ALLOWED_FILE_EXTENSIONS.reverse()
@@ -183,6 +183,8 @@ class Unpacker(object):
             return Unpacker._unpack_tar(source_path, target_path)
         elif extension == '.tar.bz2':
             return Unpacker._unpack_tar(source_path, target_path)
+        elif extension == '.bz2':
+            return Unpacker._unpack_bz2(source_path, target_path)
         elif extension == '.tar':
             return Unpacker._unpack_tar(source_path, target_path)
         elif extension == '.zip':
@@ -199,10 +201,31 @@ class Unpacker(object):
     def _unpack_tar(source_path, target_path):
         # TODO: Hide stdout (redirect to /dev/null), show only stderr.
         program_path = "tar"
-        program_opts = ["-xf", source_path, "--directory", target_path]
+        program_opts = ["xf", source_path, "--directory", target_path]
         program_cmd = [program_path] + program_opts
         print "Invoking " + program_path + " with args " + " ".join(program_opts)
         return subprocess.call(program_cmd)
+
+    @staticmethod
+    def _unpack_bz2(source_path, target_path):
+        # TODO: Hide stdout (redirect to /dev/null), show only stderr.
+        cwd = os.getcwd()
+
+        prog1 = ["mkdir", "-p", cwd + "/" + target_path]
+        prog2 = ["cd", cwd + "/" + target_path]
+        program_path = ["bunzip2"]
+
+        full_source_path = cwd + "/" + str(source_path)
+        program_opts = ["-k", full_source_path]
+        program_cmd = program_path + program_opts
+
+        print("Running: " + str(prog1))
+        subprocess.call(prog1)
+        print("Running: " + str(prog2))
+        subprocess.call(prog2)
+        print("Running: " + str(program_cmd))
+        return subprocess.call(program_cmd)
+
 
     @staticmethod
     def _unpack_zip(source_path, target_path, junk_paths):
@@ -322,19 +345,39 @@ if args.command == 'init':
 if (args.use_preset):
     print("Using preset")
     if (args.lab_name == 'lab1a'):
-        parser.set_defaults(output_mem=True, count=50000)
+        # parser.set_defaults(output_mem=True, count=50000)
+        args.output_mem=True
+        args.count=50000
     elif (args.lab_name == 'lab1b'):
-        parser.set_defaults(output_mem=True, count=150000)
+        # parser.set_defaults(output_mem=True, count=150000)
+        args.output_mem=True
+        args.count=150000
     elif (args.lab_name == 'lab2'):
-        parser.set_defaults(ext=True, output_mem=True, count=150000)
+        # parser.set_defaults(ext=True, output_mem=True, count=150000)
+        args.ext=True
+        args.output_mem=True
+        args.count=150000
     elif (args.lab_name == 'lab3a'):
-        parser.set_defaults(ext=True, output_ow=True, count=2000)
+        # parser.set_defaults(ext=True, output_ow=True, count=2000)
+        args.ext=True
+        args.output_ow=True
+        args.count=2000
     elif (args.lab_name == 'lab3b'):
-        parser.set_defaults(ext=True, output_ow=True, count=10000)
+        # parser.set_defaults(ext=True, output_ow=True, count=10000)
+        args.ext=True
+        args.output_ow=True
+        args.count=10000
     elif (args.lab_name == 'lab4'):
-        parser.set_defaults(ext=True, output_mem=True, count=100000)
+        # parser.set_defaults(ext=True, output_mem=True, count=100000)
+        args.ext=True
+        args.output_ow=True
+        args.output_mem=True
+        args.count=100000
+
 # Reparse
-args = parser.parse_args()
+# args = parser.parse_args()
+#print("Args: ", args)
+
 
 # Print configuration information
 bcolors.print_header("Configuration")
@@ -376,13 +419,14 @@ print ""
 # Find a relevant mips_program.objdump
 bcolors.print_header("Locating objdump")
 if (args.ext):
-    program_name_allowed = ["mips_ext_program.objdump",
+# mips_program_3 only used in lab4
+    program_name_allowed = ["mips_program_3.objdump",
+                            "mips_ext_program.objdump",
                             "mips_pipe_extended_program.objdump"]
 elif (args.pipe):
     program_name_allowed = ["mips_pipe_program.objdump"]
-# mips_program_3 only used in lab4
 else:
-    program_name_allowed = ["mips_program.objdump", "mips_program_3.objdump"]
+    program_name_allowed = ["mips_program.objdump"]
 
 program_path = None
 for program_name in program_name_allowed:
@@ -441,7 +485,7 @@ if args.view_report or args.view_code:
 
                     subprocess.call(["xdg-open", report])
             if args.view_code:
-                if (ext == ".s") or (ext == ".S"):
+                if (ext == ".s") or (ext == ".S") or (ext ==".c"):
                     src_file = program_path + "/" + basename + ext
                     subprocess.call(["cat", src_file])
 # Done, kthx bye!
