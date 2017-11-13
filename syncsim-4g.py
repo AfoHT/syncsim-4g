@@ -359,41 +359,45 @@ if args.command == 'init':
     FileHandler.create_initial_file_structure('.')
     sys.exit(0)
 
+# print("Args: ", args)
 # Set up auxiliary defaults
 if (args.use_preset):
     print("Using preset")
     if (args.lab_name == 'lab1a'):
-        # parser.set_defaults(output_mem = True, count=50000)
+        # parser.set_defaults(output_mem=True, count=50000)
         args.output_mem = True
         args.count = 50000
     elif (args.lab_name == 'lab1b'):
-        # parser.set_defaults(output_mem = True, count=150000)
+        # parser.set_defaults(output_mem=True, count=150000)
         args.output_mem = True
         args.count = 150000
     elif (args.lab_name == 'lab2'):
-        # parser.set_defaults(ext = True, output_mem = True, count=150000)
+        # parser.set_defaults(ext=True, output_mem=True, count=150000)
         args.ext = True
         args.output_mem = True
         args.count = 150000
     elif (args.lab_name == 'lab3a'):
-        # parser.set_defaults(ext = True, output_ow = True, count=2000)
+        # parser.set_defaults(ext=True, output_ow=True, count=2000)
         args.ext = True
         args.output_ow = True
         args.count = 2000
     elif (args.lab_name == 'lab3b'):
-        # parser.set_defaults(ext = True, output_ow = True, count=10000)
+        # parser.set_defaults(ext=True, output_ow=True, count=10000)
         args.ext = True
         args.output_ow = True
-        args.count = 10000
+        args.count = 50000
     elif (args.lab_name == 'lab4'):
-        # parser.set_defaults(ext = True, output_mem = True, count=100000)
+        # parser.set_defaults(ext=True, output_mem=True, count=100000)
         args.ext = True
         args.output_ow = True
         args.output_mem = True
         args.count = 100000
 
+    else:
+        print("Illegal lab name given")
+
 # Reparse
-# args = parser.parse_args()
+# args = parser.parse_args([])
 # print("Args: ", args)
 
 
@@ -435,6 +439,7 @@ else:
 # Find a relevant mips_program.objdump
 bcolors.print_header("Locating objdump")
 
+
 # mips_program_3 only used in lab4
 if (args.ext):
     program_name_allowed = ["mips_program_3.objdump",
@@ -450,21 +455,26 @@ program_path = None
 for program_name in program_name_allowed:
     program_path = FileHandler.find_relative_path(out_dir, program_name)
 
-    if args.debug and debug:
-        print("prog path", program_path, "program_name", program_name)
-        print(os.path.isfile(program_path + "/" + program_name))
+    if args.debug:
+        print("prog path:", program_path, "program_name:", program_name)
+        print("Found the file?: " +
+              str(os.path.isfile(program_path + "/" + program_name)))
     # if (program_path is None):
 
     if not os.path.isfile(program_path + "/" + program_name):
+        program_full_path = ""
         continue
     else:
         program_full_path = program_path + "/" + program_name
         break
-if (program_path is None):
-    bcolors.print_error("Missing objdump with name: " + program_name_allowed)
-    sys.exit(-1)
 
-bcolors.print_ok_msg("Found objdump at:", program_full_path + "\n")
+# if (program_full_path is None):
+if not program_full_path:
+    for name in program_name_allowed:
+        bcolors.print_error("Missing objdump with name: " + name)
+    sys.exit(-1)
+else:
+    bcolors.print_ok_msg("Found objdump at:", program_full_path + "\n")
 
 # Run in syncsim
 bcolors.print_header("Running in SyncSim")
